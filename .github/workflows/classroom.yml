@@ -1,0 +1,38 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  name: "${{ github.actor }}"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    #- name: make
+    #  run: make
+    - name: 检查
+      run: make save-test-results
+    - name: Send POST request with JSON data
+      run: |
+          cat ./build/test_results.json
+          grade_json=$(cat ./build/test_results.json | sed "s/testName/$name/")
+          # 使用 curl 发送 POST 请求
+          curl -X POST http://117.72.112.62:8080/api/updateGrade \
+            -H "Content-Type: application/json" \
+            -d "$grade_json"
+    #- run: echo $(cat ./build/test_results.json) | sed "s/testName/$name/"
+    - run: echo "$grade_json"
+    
+    - name: 清空
+      run: make clean
